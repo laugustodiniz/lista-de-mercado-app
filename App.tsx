@@ -1,6 +1,9 @@
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import {
+  ActionSheetIOS,
+  ActivityIndicator,
+  Alert,
   FlatList,
   Keyboard,
   KeyboardAvoidingView,
@@ -12,18 +15,19 @@ import {
   View,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-type Item = {
-  id: string;
-  name: string;
-  bought: boolean;
-};
+import { Item } from './constants/types';
+import { usePhotoScanner } from './hooks/usePhotoScanner';
+import PhotoReviewModal from './components/PhotoReviewModal';
 
 const STORAGE_KEY = '@lista_mercado';
 
 export default function App() {
   const [items, setItems] = useState<Item[]>([]);
   const [input, setInput] = useState('');
+  const [reviewItems, setReviewItems] = useState<string[]>([]);
+  const [reviewVisible, setReviewVisible] = useState(false);
+
+  const { scanFromGallery, scanFromCamera, isLoading } = usePhotoScanner();
 
   useEffect(() => {
     loadItems();
@@ -55,6 +59,17 @@ export default function App() {
     Keyboard.dismiss();
   }
 
+  function addMultipleItems(names: string[]) {
+    if (names.length === 0) return;
+    const now = Date.now();
+    const newItems = [
+      ...items,
+      ...names.map((name, i) => ({ id: (now + i).toString(), name, bought: false })),
+    ];
+    setItems(newItems);
+    saveItems(newItems);
+  }
+
   function toggleItem(id: string) {
     const newItems = items.map(item =>
       item.id === id ? { ...item, bought: !item.bought } : item
@@ -69,6 +84,41 @@ export default function App() {
     saveItems(newItems);
   }
 
+  async function handleScanPhoto() {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        { options: ['Cancelar', 'Galeria de fotos', 'Tirar foto'], cancelButtonIndex: 0 },
+        async buttonIndex => {
+          if (buttonIndex === 1) await runScan('gallery');
+          if (buttonIndex === 2) await runScan('camera');
+        }
+      );
+    } else {
+      Alert.alert('Adicionar da foto', 'Escolha uma opção', [
+        { text: 'Galeria de fotos', onPress: () => runScan('gallery') },
+        { text: 'Tirar foto', onPress: () => runScan('camera') },
+        { text: 'Cancelar', style: 'cancel' },
+      ]);
+    }
+  }
+
+  async function runScan(source: 'gallery' | 'camera') {
+    const extracted = source === 'gallery'
+      ? await scanFromGallery()
+      : await scanFromCamera();
+    if (extracted.length > 0) {
+      setReviewItems(extracted);
+      setReviewVisible(true);
+    } else if (!isLoading) {
+      Alert.alert('Nenhum item encontrado', 'Não foi possível identificar itens na imagem.');
+    }
+  }
+
+  function handleReviewConfirm(selected: string[]) {
+    setReviewVisible(false);
+    addMultipleItems(selected);
+  }
+
   const pending = items.filter(i => !i.bought).length;
 
   return (
@@ -77,6 +127,13 @@ export default function App() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <StatusBar style="light" />
+
+      {isLoading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#fff" />
+          <Text style={styles.loadingText}>Analisando imagem...</Text>
+        </View>
+      )}
 
       <View style={styles.header}>
         <Text style={styles.title}>Lista de Mercado</Text>
@@ -123,7 +180,17 @@ export default function App() {
         <Pressable style={styles.addBtn} onPress={addItem}>
           <Text style={styles.addBtnText}>+</Text>
         </Pressable>
+        <Pressable style={styles.cameraBtn} onPress={handleScanPhoto}>
+          <Text style={styles.cameraBtnText}>📷</Text>
+        </Pressable>
       </View>
+
+      <PhotoReviewModal
+        visible={reviewVisible}
+        items={reviewItems}
+        onConfirm={handleReviewConfirm}
+        onCancel={() => setReviewVisible(false)}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -132,6 +199,22 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  loadingText: {
+    color: '#fff',
+    marginTop: 12,
+    fontSize: 16,
   },
   header: {
     backgroundColor: '#2e7d32',
@@ -214,6 +297,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopWidth: 1,
     borderTopColor: '#eee',
+    gap: 8,
   },
   input: {
     flex: 1,
@@ -222,7 +306,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
-    marginRight: 10,
     color: '#333',
   },
   addBtn: {
@@ -236,5 +319,15 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 28,
     lineHeight: 32,
+  },
+  cameraBtn: {
+    backgroundColor: '#1565c0',
+    borderRadius: 10,
+    width: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cameraBtnText: {
+    fontSize: 22,
   },
 });

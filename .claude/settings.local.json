@@ -13,7 +13,12 @@
       "Read(//c/Users/laugu/OneDrive/Documentos/lista-de-mercado-app/$TEMP:-/**)",
       "Bash(\"/c/Users/laugu/AppData/Local/Programs/Python/Python313/python.exe\" .claude/hooks/validate-commit.py)",
       "Bash(\"C:\\\\Users\\\\laugu\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\" .claude/hooks/validate-commit.py)",
-      "Bash(echo \"Exit: $?\")"
+      "Bash(echo \"Exit: $?\")",
+      "Read(//c/Users/laugu/AppData/Local/Temp/**)",
+      "Bash(cmd.exe /c \"echo {\"\"tool_input\"\":{\"\"command\"\":\"\"git commit -m test\"\"}} | C:\\\\Users\\\\laugu\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe C:\\\\Users\\\\laugu\\\\OneDrive\\\\Documentos\\\\lista-de-mercado-app\\\\.claude\\\\hooks\\\\validate-commit.py\")",
+      "Bash(npx expo:*)",
+      "Bash(npm install:*)",
+      "Bash(npm uninstall:*)"
     ]
   }
 }
