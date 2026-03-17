@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//tmp/**)",
+      "Read(//c/Users/laugu/OneDrive/Documentos/lista-de-mercado-app/$TEMP/**)",
+      "Bash(python3 -c \"import tempfile,os; print\\(open\\(os.path.join\\(tempfile.gettempdir\\(\\),''hook_debug.json''\\)\\).read\\(\\)\\)\")",
+      "Bash(C:\\\\Users\\\\laugu\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe -c \"import tempfile,os; p=os.path.join\\(tempfile.gettempdir\\(\\),''hook_debug.json''\\); print\\(open\\(p\\).read\\(\\) if os.path.exists\\(p\\) else ''arquivo nao encontrado''\\)\")",
+      "Bash(\"/c/Users/laugu/AppData/Local/Programs/Python/Python313/python.exe\" -c \"import tempfile,os; p=os.path.join\\(tempfile.gettempdir\\(\\),''hook_debug.json''\\); print\\(open\\(p\\).read\\(\\) if os.path.exists\\(p\\) else ''arquivo nao encontrado''\\)\")",
+      "Bash(echo $TEMP)",
+      "Read(//c/Users/laugu/OneDrive/Documentos/lista-de-mercado-app/**)",
+      "Bash(echo TEMP=$TEMP)",
+      "Bash(echo TMP=$TMP)",
+      "Read(//c/Users/laugu/OneDrive/Documentos/lista-de-mercado-app/$TEMP:-/**)",
+      "Bash(\"/c/Users/laugu/AppData/Local/Programs/Python/Python313/python.exe\" .claude/hooks/validate-commit.py)",
+      "Bash(\"C:\\\\Users\\\\laugu\\\\AppData\\\\Local\\\\Programs\\\\Python\\\\Python313\\\\python.exe\" .claude/hooks/validate-commit.py)",
+      "Bash(echo \"Exit: $?\")"
+    ]
+  }
+}

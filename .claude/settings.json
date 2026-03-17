@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "C:\\Users\\laugu\\AppData\\Local\\Programs\\Python\\Python313\\python.exe .claude/hooks/validate-commit.py"
+            "command": "C:\\Users\\laugu\\AppData\\Local\\Programs\\Python\\Python313\\python.exe C:\\Users\\laugu\\OneDrive\\Documentos\\lista-de-mercado-app\\.claude\\hooks\\validate-commit.py"
           }
         ]
       }
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "C:\\Users\\laugu\\AppData\\Local\\Programs\\Python\\Python313\\python.exe .claude/hooks/typecheck.py"
+            "command": "C:\\Users\\laugu\\AppData\\Local\\Programs\\Python\\Python313\\python.exe C:\\Users\\laugu\\OneDrive\\Documentos\\lista-de-mercado-app\\.claude\\hooks\\typecheck.py"
           }
         ]
       }
