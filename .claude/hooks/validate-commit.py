@@ -9,8 +9,17 @@ import sys
 import json
 import re
 
-data = json.load(sys.stdin)
-cmd = data.get("command", "")
+raw = sys.stdin.read()
+# Debug: logar o que chega no hook
+import tempfile, os
+log_path = os.path.join(tempfile.gettempdir(), "hook_debug.json")
+with open(log_path, "w") as f:
+    f.write(raw)
+
+data = json.loads(raw)
+# Claude Code envia o comando dentro de tool_input.command
+tool_input = data.get("tool_input", {})
+cmd = tool_input.get("command", "") or data.get("command", "")
 
 # So verifica comandos git commit
 if "git commit" not in cmd:
