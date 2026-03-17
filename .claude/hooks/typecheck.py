@@ -11,7 +11,7 @@ import os
 data = json.load(sys.stdin)
 
 # Pega o arquivo que foi editado
-file_path = data.get("file_path", "")
+file_path = data.get("tool_input", {}).get("file_path", "")
 
 # So roda para arquivos TypeScript
 if not (file_path.endswith(".ts") or file_path.endswith(".tsx")):
