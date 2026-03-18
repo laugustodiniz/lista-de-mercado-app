@@ -1,10 +1,7 @@
 import { useState } from 'react';
 import { Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-const genAI = new GoogleGenerativeAI(process.env.EXPO_PUBLIC_GEMINI_KEY ?? '');
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 
 const EXTRACTION_PROMPT = `You are a shopping list extractor. Analyze the image and extract items that someone would buy at a supermarket.
 
@@ -18,24 +15,50 @@ Rules:
 Example: ["Arroz Parborizado", "Feijao Carioca", "Leite Integral"]`;
 
 async function extractItemsFromBase64(base64: string): Promise<string[]> {
-  const result = await model.generateContent([
-    {
-      inlineData: {
-        mimeType: 'image/jpeg',
-        data: base64,
-      },
+  const res = await fetch(ANTHROPIC_API_URL, {
+    method: 'POST',
+    headers: {
+      'x-api-key': process.env.EXPO_PUBLIC_ANTHROPIC_KEY ?? '',
+      'anthropic-version': '2023-06-01',
+      'content-type': 'application/json',
     },
-    EXTRACTION_PROMPT,
-  ]);
+    body: JSON.stringify({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1024,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: 'image/jpeg',
+                data: base64,
+              },
+            },
+            { type: 'text', text: EXTRACTION_PROMPT },
+          ],
+        },
+      ],
+    }),
+  });
 
-  const text = result.response.text();
-  return JSON.parse(text) as string[];
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(`${res.status}: ${JSON.stringify(err)}`);
+  }
+
+  const data = await res.json();
+  const text: string = data.content?.[0]?.text?.trim() ?? '';
+  const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  return JSON.parse(cleaned) as string[];
 }
 
 export function usePhotoScanner() {
   const [isLoading, setIsLoading] = useState(false);
 
-  async function scanFromGallery(): Promise<string[]> {
+  async function scanFromGallery(): Promise<string[] | null> {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) {
       Alert.alert('Permissão negada', 'Permita o acesso à galeria nas configurações do app.');
@@ -53,7 +76,7 @@ export function usePhotoScanner() {
     return runExtraction(result.assets[0].base64);
   }
 
-  async function scanFromCamera(): Promise<string[]> {
+  async function scanFromCamera(): Promise<string[] | null> {
     const permission = await ImagePicker.requestCameraPermissionsAsync();
     if (!permission.granted) {
       Alert.alert('Permissão negada', 'Permita o acesso à câmera nas configurações do app.');
@@ -70,13 +93,15 @@ export function usePhotoScanner() {
     return runExtraction(result.assets[0].base64);
   }
 
-  async function runExtraction(base64: string): Promise<string[]> {
+  // Retorna null se houve erro (alerta já exibido), [] se vazio, string[] se achou itens
+  async function runExtraction(base64: string): Promise<string[] | null> {
     setIsLoading(true);
     try {
       return await extractItemsFromBase64(base64);
-    } catch {
-      Alert.alert('Erro', 'Não foi possível analisar a imagem. Tente novamente.');
-      return [];
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      Alert.alert('Erro', msg);
+      return null;
     } finally {
       setIsLoading(false);
     }
